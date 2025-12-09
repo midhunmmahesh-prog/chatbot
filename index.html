@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CAS Vattamkulam Chatbot</title>
+  <style>
+    :root{--bg:#f6f7fb;--card:#ffffff;--accent:#0b84ff;--muted:#666}
+    body{font-family:Inter, system-ui, Arial, sans-serif; margin:0; background:var(--bg); color:#111}
+    .wrap{max-width:900px;margin:32px auto;padding:20px}
+    header{display:flex;gap:12px;align-items:center}
+    h1{margin:0;font-size:20px}
+    .card{background:var(--card);border-radius:12px;box-shadow:0 6px 24px rgba(12,20,40,0.06);padding:18px;margin-top:16px}
+    #chatBox{height:520px;overflow:auto;padding:12px;border-radius:8px;border:1px solid #e6e9ef;background:#fcfdff}
+    .msg{margin:8px 0;line-height:1.4}
+    .user{text-align:right}
+    .user .bubble{display:inline-block;background:#e6f0ff;color:#023e8a;padding:8px 12px;border-radius:14px;border-bottom-right-radius:4px}
+    .bot .bubble{display:inline-block;background:#f2f2f7;color:#111;padding:10px 12px;border-radius:12px;border:1px solid #e8e8f0;white-space:pre-wrap}
+    .controls{display:flex;gap:8px;margin-top:12px}
+    input[type="text"]{flex:1;padding:10px;border-radius:8px;border:1px solid #e3e6ee}
+    button{background:var(--accent);color:white;padding:10px 14px;border:none;border-radius:8px;cursor:pointer}
+    footer{font-size:13px;color:var(--muted);margin-top:12px}
+    .hint{font-size:13px;color:var(--muted);margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img src="https://raw.githubusercontent.com/favicon.ico" alt="" style="width:40px;height:40px;border-radius:8px;filter:grayscale(1);opacity:.9"/>
+      <div>
+        <h1>CAS Vattamkulam Chatbot</h1>
+        <div class="hint">Ask about courses, admission, NSS, placements, clubs, facilities, contact info, events, and more.</div>
+      </div>
+    </header>
+
+    <div class="card" role="main" aria-live="polite">
+      <div id="chatBox" aria-label="Chat history"></div>
+
+      <div class="controls">
+        <input id="msg" type="text" placeholder="Type a question (e.g. 'How to apply for admission?')" />
+        <button id="sendBtn">Send</button>
+      </div>
+
+      <div style="margin-top:8px">
+        <button id="helpBtn" style="background:#fff;color:var(--accent);border:1px solid #e6f0ff;padding:8px 12px;border-radius:8px;cursor:pointer">Show Help Menu</button>
+        <button id="resetBtn" style="background:#fff;color:#333;border:1px solid #eee;padding:8px 12px;border-radius:8px;cursor:pointer;margin-left:8px">Clear</button>
+      </div>
+
+      <footer>Data source: CAS Vattamkulam bot (converted to JS). No network calls — everything runs in your browser.</footer>
+    </div>
+  </div>
+
+<script>
+/* -------------------------
+   Converted chatbot logic
+   ------------------------- */
+const collegeData = {
+  basic_info: {
+    name: 'College of Applied Science, Vattamkulam',
+    established: '2005',
+    affiliation: 'University of Calicut',
+    management: 'IHRD (Institute of Human Resource and Development)',
+    location: 'Vattamkulam, Nellissery, Sukapuram (P.O.), Edappal',
+    district: 'Malappuram',
+    state: 'Kerala',
+    pin: '679576',
+    phone: ['0494-2689655', '8547006802'],
+    email: 'casvattamkulam@gmail.com',
+    website: 'https://casvattamkulam.ihrd.ac.in',
+    faculty_count: '26',
+    academic_session: 'June - May'
+  },
+
+  courses: {
+    ug: {
+      'BSc Computer Science': {duration:'3 years', eligibility:'+2 with Mathematics/Computer Science', seats:'As per University norms', career:'Software Developer, Web Developer, System Analyst, Database Administrator'},
+      'BSc Electronics': {duration:'3 years', eligibility:'+2 with Physics/Mathematics', seats:'As per University norms', career:'Electronics Engineer, Hardware Engineer, Embedded Systems Developer'},
+      'BCA (Bachelor of Computer Applications)': {duration:'3 years', eligibility:'+2 in any stream', seats:'As per University norms', career:'Software Engineer, App Developer, IT Consultant, System Administrator'},
+      'BCom with Computer Application': {duration:'3 years', eligibility:'+2 Commerce/Any stream', seats:'As per University norms', career:'Accountant, Financial Analyst, Tax Consultant, Business Analyst'},
+      'BBA Logistics Honours': {duration:'3 years', eligibility:'+2 in any stream', seats:'As per University norms', career:'Logistics Manager, Supply Chain Analyst, Operations Manager'}
+    },
+    pg: {
+      'MSc Computer Science': {duration:'2 years', eligibility:'BSc Computer Science/BCA or equivalent', seats:'As per University norms', career:'Research Scientist, Senior Developer, Data Scientist, AI/ML Engineer'},
+      'MCom Finance': {duration:'2 years', eligibility:'BCom or equivalent', seats:'As per University norms', career:'Financial Advisor, Investment Banker, Finance Manager, Chartered Accountant'}
+    }
+  },
+
+  admission: {
+    academic_year: '2025-26',
+    status: 'Open',
+    registration_period: 'Open till June 9, 2025, 5:00 PM',
+    registration_links: {
+      'IHRD Direct (50% seats)': 'https://ihrdadmissions.org',
+      'University of Calicut': 'https://admission.uoc.ac.in/admission'
+    },
+    application_fee: { 'SC/ST': '₹205', 'General': '₹495' },
+    admission_process: [
+      'Step 1: Visit the admission portal (IHRD or University)',
+      'Step 2: Complete online registration with valid documents',
+      'Step 3: Pay application fee online',
+      'Step 4: Download and print the application form',
+      'Step 5: Attend counseling as per schedule',
+      'Step 6: Complete document verification',
+      'Step 7: Pay fees and confirm admission'
+    ],
+    required_documents: [
+      'SSLC Certificate and Mark List','+2 Certificate and Mark List','Transfer Certificate','Community Certificate (if applicable)',
+      'Income Certificate (if applicable)','Aadhaar Card','Passport size photographs','Migration Certificate (for other universities)'
+    ],
+    seats_distribution: '50% IHRD Direct Admission, 50% University Allotment',
+    contact_admission: 'Call: 0494-2689655, 8547006802'
+  },
+
+  departments: {
+    'Computer Science': {courses:['BSc Computer Science','MSc Computer Science','BCA'], facilities:'State-of-the-art Computer Lab, Latest Software, High-Speed Internet', activities:'Coding competitions, Tech fests, Industry workshops'},
+    'Electronics': {courses:['BSc Electronics'], facilities:'Well-equipped Electronics Lab, Modern equipment', activities:'Circuit design, Robotics, Project exhibitions'},
+    'Commerce': {courses:['BCom with Computer Application','MCom Finance','BBA Logistics Honours'], facilities:'Commerce Lab, Computer facilities', activities:'Business seminars, Financial workshops, Industry visits'},
+    'General': {courses:'Support courses for all programs', subjects:'English, Mathematics, Physics, Statistics', activities:'Inter-departmental events'},
+    'Physical Education': {facilities:'Open Gym, Volleyball Court, Sports Ground', activities:'Sports competitions, Fitness programs, Inter-college tournaments'}
+  },
+
+  facilities: {
+    Academic:['Smart Classrooms with Interactive Smartboards','Audio-Visual Teaching Systems','Digital Learning Resources','Wi-Fi Enabled Campus','Online Learning Management System (LMS)'],
+    Laboratory:['Computer Lab - Latest hardware and software','Electronics Lab - Advanced equipment','Commerce Lab - Business simulation software','Internet facility with high-speed connectivity'],
+    Library:['Comprehensive collection of books','Digital library with e-resources','Reference section','Reading rooms','Journal and magazine subscriptions','INFLIBNET access'],
+    Sports:['Modern Gym with latest equipment','Volleyball Court','Open Gym','Indoor games facility','Sports equipment for various games'],
+    Other:['Auditorium for events','Cafeteria','First Aid facility','Parking area','Generator backup']
+  },
+
+  nss: {
+    full_name:'National Service Scheme', objective:'Develop student personality through community service',
+    activities:['Village adoption and development programs','Health and hygiene awareness camps','Blood donation camps','Tree plantation drives','Literacy programs','Clean India campaigns','Road safety awareness','Women empowerment programs','Environmental conservation','Disaster relief work'],
+    special_camps:'7-day special camping programs in adopted villages', regular_activities:'120 hours of community service per year',
+    achievements:['Best NSS Volunteer Awards','State Level Leadership Camps participation','Community development projects','IHRD received Best NSS Directorate from Kerala State (2021-22)'],
+    benefits:['Certificate from University','Weightage in higher studies and jobs','Leadership development','Social awareness','Community connect']
+  },
+
+  clubs: {
+    'Computer Association': {activities:['Coding competitions and hackathons','Technical workshops and seminars','Project exhibitions','Industry expert sessions','Software development projects','Tech talks and webinars','Coding bootcamps'], events:'TECHNOVATION 2K23 - Annual tech fest', benefits:'Skill enhancement, Industry exposure, Networking'},
+    'Electronics Association': {activities:['Circuit design workshops','Robotics projects','Microcontroller programming','Electronics project exhibitions','Technical seminars','Industry visits','Innovation challenges'], focus:'Hands-on experience and practical learning', benefits:'Technical skills, Problem-solving, Innovation'},
+    'Commerce Association': {activities:['Business plan competitions','Financial literacy programs','Stock market simulations','Entrepreneurship workshops','Guest lectures by industry experts','Business case studies','Marketing competitions'], benefits:'Business acumen, Financial knowledge, Leadership'},
+    'BMC (Business Management Club)': {activities:['Management games','Leadership workshops','Team building activities','Business simulations','Industry interactions']},
+    'Literary Club': {activities:['Debates and discussions','Creative writing competitions','Book reviews','Poetry sessions','Public speaking events','Magazine publication','Quiz competitions']}
+  },
+
+  placement: {
+    coordinator:'Gopalakrishnan U.K., Lecturer, Department of Computer Science',
+    email:'placementcell.cas@gmail.com', phone:'9495561967',
+    training:['Aptitude training from 5th semester','Verbal ability training','Group discussion practice','Mock interviews','Resume building workshops','Industry-oriented training by professionals','Soft skills development','Technical interview preparation'],
+    top_recruiters:['TCS (Tata Consultancy Services)','Wipro','Infosys','Tech Mahindra','HP','iGATE','Various IT and non-IT companies'],
+    placement_rate:'50% average placement rate',
+    activities:['Campus recruitment drives','Job fairs','Industry tie-ups','Internship opportunities','Career counseling','TCS Affirmation Action Programme'],
+    highlights:['Regular campus placements','Industry partnerships','Professional training programs','Placement assistance for all students']
+  },
+
+  other_cells: {
+    'Women Cell': {purpose:'Women empowerment and safety', activities:['Awareness programs on women rights','Self-defense training','Health and hygiene workshops','Gender sensitization programs','Grievance redressal']},
+    'Anti-Ragging Cell': {purpose:'Ensure ragging-free campus', activities:['Anti-ragging awareness','Strict monitoring','24/7 helpline','Anonymous complaint mechanism','Disciplinary actions'], policy:'Zero tolerance for ragging'},
+    'IQAC (Internal Quality Assurance Cell)': {purpose:'Maintain and enhance quality of education', functions:['Academic quality monitoring','Faculty development programs','Student feedback analysis','Accreditation preparation','Quality initiatives implementation']},
+    'PTA (Parent Teacher Association)': {purpose:'Bridge between parents and college', activities:['Regular parent meetings','Academic progress discussions','Student welfare programs','Feedback mechanism']},
+    'Student Grievance Cell': {purpose:'Address student concerns', features:['Online complaint registration','Quick resolution mechanism','Confidential handling','Regular follow-up']}
+  },
+
+  college_union: {purpose:'Student representation and leadership', positions:['Chairperson','Vice Chairperson','General Secretary','Arts Club Secretary','Magazine Editor','University Union Councillor'], activities:['Organize college events','Represent student issues','Cultural programs','Sports events','Social initiatives'], recent:'College Union 2024-25 active'},
+
+  events: {
+    'TECHNOVATION 2K23': {type:'Annual techno-cultural fest', description:'IHRD premier tech fest showcasing technical, cultural and entrepreneurial skills', activities:'Technical competitions, cultural programs, workshops, exhibitions', connection:'Part of THARANG - IHRD annual entrepreneurship fest'},
+    'Job Fair': {frequency:'Annual', purpose:'Connect students with employers', participants:'Multiple companies and recruiters'},
+    'Run Kerala Run': {type:'State-wide fitness initiative', participation:'Active student and staff participation'},
+    'Blood Donation Camps': {frequency:'Regular', partners:'Blood banks and hospitals', impact:'Social service and community health'},
+    'Sports Events': {activities:'Inter-college tournaments, intra-college competitions', sports:'Volleyball, athletics, indoor games'}
+  },
+
+  vision: 'To develop into a contributing Centre of excellence in knowledge and technology creating globally competitive professionals who would contribute positively to the society.',
+  mission: 'To impart quality education and create professionals with high competency and values who can make indelible mark in their respective fields.',
+  accreditation: {status:'Accredited by leading educational bodies', affiliations:'University of Calicut', recognitions:'Quality education standards maintained'}
+};
+
+/* -------------------------
+   Simple intent matching
+   ------------------------- */
+function searchQuery(q) {
+  q = q.toLowerCase();
+  const matched = [];
+  if (/\b(course|courses|program|degree|bsc|msc|bca|bcom|mcom|bba|ug|pg)\b/.test(q)) matched.push('courses');
+  if (/\b(admission|apply|application|enroll|join|register|eligibility|seat|how to)\b/.test(q)) matched.push('admission');
+  if (/\b(fee|fees|cost|payment|charge)\b/.test(q)) matched.push('fees');
+  if (/\b(nss|national service)\b/.test(q)) matched.push('nss');
+  if (/\b(club|clubs|association|computer association|electronics association|commerce|literary|bmc)\b/.test(q)) matched.push('clubs');
+  if (/\b(placement|job|career|recruit|company|training)\b/.test(q)) matched.push('placement');
+  if (/\b(facility|facilities|infrastructure|lab|library|gym|campus)\b/.test(q)) matched.push('facilities');
+  if (/\b(department|faculty|teacher|staff)\b/.test(q)) matched.push('departments');
+  if (/\b(contact|phone|email|address|location|where|reach)\b/.test(q)) matched.push('contact');
+  if (/\b(about|history|vision|mission|established|ihrd)\b/.test(q)) matched.push('about');
+  if (/\b(event|fest|technovation|cultural|sports|blood)\b/.test(q)) matched.push('events');
+  if (/\b(women cell|anti.?ragging|iqac|pta|grievance|student welfare)\b/.test(q)) matched.push('cells');
+  if (/\b(union|college union|student council)\b/.test(q)) matched.push('union');
+  return matched.length ? matched : ['general'];
+}
+
+/* -------------------------
+   Response builders
+   ------------------------- */
+
+function getCoursesInfo(q) {
+  q = q.toLowerCase();
+  const ug = collegeData.courses.ug;
+  const pg = collegeData.courses.pg;
+
+  if (q.includes('computer science') || q.includes('cs')) {
+    let info = '💻 Computer Science Programs:\n\n';
+    Object.assign({}, ug, pg);
+    Object.keys({...ug, ...pg}).forEach(name=>{
+      if (name.toLowerCase().includes('computer science')) {
+        const d = {...ug, ...pg}[name];
+        info += `${name}\n  Duration: ${d.duration}\n  Eligibility: ${d.eligibility}\n  Careers: ${d.career}\n\n`;
+      }
+    });
+    return info.trim();
+  }
+
+  if (q.includes('electronics')) {
+    const d = ug['BSc Electronics'];
+    return `⚡ BSc Electronics\nDuration: ${d.duration}\nEligibility: ${d.eligibility}\nCareers: ${d.career}`;
+  }
+
+  if (q.includes('bca')) {
+    const d = ug['BCA (Bachelor of Computer Applications)'];
+    return `💼 BCA (Bachelor of Computer Applications)\nDuration: ${d.duration}\nEligibility: ${d.eligibility}\nCareers: ${d.career}`;
+  }
+
+  if (q.includes('commerce') || q.includes('bcom') || q.includes('mcom')) {
+    let info = '📊 Commerce Programs:\n\n';
+    Object.keys({...ug, ...pg}).forEach(name=>{
+      if (name.toLowerCase().includes('com')) {
+        const d = {...ug, ...pg}[name];
+        info += `${name}\n  Duration: ${d.duration}\n  Careers: ${d.career}\n\n`;
+      }
+    });
+    return info.trim();
+  }
+
+  let info = '📚 All Courses at CAS Vattamkulam:\n\nUNDERGRADUATE PROGRAMS:\n';
+  Object.entries(ug).forEach(([name, d])=>{
+    info += `\n• ${name} (${d.duration})\n  Eligibility: ${d.eligibility}\n`;
+  });
+  info += '\n\nPOSTGRADUATE PROGRAMS:\n';
+  Object.entries(pg).forEach(([name,d])=>{
+    info += `\n• ${name} (${d.duration})\n  Eligibility: ${d.eligibility}\n`;
+  });
+  info += `\n\n✓ Affiliated to ${collegeData.basic_info.affiliation}`;
+  return info;
+}
+
+function getAdmissionInfo() {
+  const adm = collegeData.admission;
+  let info = '📝 ADMISSION GUIDE 2025-26\n\n';
+  info += `Status: ${adm.status}\n`;
+  info += `Last Date: ${adm.registration_period}\n`;
+  info += `Seats: ${adm.seats_distribution}\n\nADMISSION PROCESS:\n`;
+  adm.admission_process.forEach(s => info += s + '\n');
+  info += '\nREQUIRED DOCUMENTS:\n';
+  adm.required_documents.forEach(d => info += `• ${d}\n`);
+  info += '\nAPPLY ONLINE:\n';
+  Object.entries(adm.registration_links).forEach(([k,v])=> info += `• ${k}: ${v}\n`);
+  info += `\nContact: ${adm.contact_admission}`;
+  return info;
+}
+
+function getFeesInfo() {
+  const adm = collegeData.admission;
+  let info = '💰 FEE STRUCTURE\n\nApplication Fee:\n';
+  Object.entries(adm.application_fee).forEach(([k,v])=> info += `• ${k}: ${v}\n`);
+  info += '\nNote: Course fees will be as per University of Calicut norms.\nContact college office for detailed fee structure.';
+  return info;
+}
+
+function getNSSInfo() {
+  const nss = collegeData.nss;
+  let info = '🌟 NATIONAL SERVICE SCHEME (NSS)\n\n';
+  info += `Objective: ${nss.objective}\n\nKEY ACTIVITIES:\n`;
+  nss.activities.slice(0,8).forEach(a=> info += `• ${a}\n`);
+  info += `\nSpecial Programs:\n• ${nss.special_camps}\n• ${nss.regular_activities}\n\nACHIEVEMENTS:\n`;
+  nss.achievements.forEach(a=> info += `• ${a}\n`);
+  info += '\nBENEFITS:\n';
+  nss.benefits.forEach(b=> info += `✓ ${b}\n`);
+  return info;
+}
+
+function getClubsInfo(q) {
+  q = q.toLowerCase();
+  const clubs = collegeData.clubs;
+  if (q.includes('computer')) {
+    const c = clubs['Computer Association'];
+    let info = '💻 COMPUTER ASSOCIATION\n\nActivities:\n';
+    c.activities.forEach(a=> info += `• ${a}\n`);
+    info += `\nMajor Event: ${c.events}\nBenefits: ${c.benefits}`;
+    return info;
+  }
+  if (q.includes('electronics')) {
+    const c = clubs['Electronics Association'];
+    let info = '⚡ ELECTRONICS ASSOCIATION\n\nActivities:\n';
+    c.activities.forEach(a=> info += `• ${a}\n`);
+    info += `\nFocus: ${c.focus}\nBenefits: ${c.benefits}`;
+    return info;
+  }
+  if (q.includes('commerce')) {
+    const c = clubs['Commerce Association'];
+    let info = '📊 COMMERCE ASSOCIATION\n\nActivities:\n';
+    c.activities.forEach(a=> info += `• ${a}\n`);
+    info += `\nBenefits: ${c.benefits}`;
+    return info;
+  }
+  let info = '🎯 CLUBS & ASSOCIATIONS\n\n';
+  Object.entries(clubs).forEach(([name,data])=>{
+    info += `${name}\n`;
+    if (data.activities) info += `  Key Activities: ${data.activities.slice(0,3).join(', ')}\n\n`;
+  });
+  info += '✓ Active student participation\n✓ Skill development focus\n✓ Industry exposure';
+  return info;
+}
+
+function getPlacementInfo() {
+  const p = collegeData.placement;
+  let info = '💼 PLACEMENT CELL\n\n';
+  info += `Coordinator: ${p.coordinator}\nContact: ${p.email}, ${p.phone}\n\nTRAINING PROGRAMS:\n`;
+  p.training.forEach(t=> info += `• ${t}\n`);
+  info += '\nTOP RECRUITERS:\n';
+  p.top_recruiters.forEach(c => info += `• ${c}\n`);
+  info += `\nPlacement Rate: ${p.placement_rate}\n\nPLACEMENT ACTIVITIES:\n`;
+  p.activities.forEach(a=> info += `• ${a}\n`);
+  return info;
+}
+
+function getFacilitiesInfo() {
+  const f = collegeData.facilities;
+  let info = '🏫 CAMPUS FACILITIES\n\nAcademic Facilities:\n';
+  f.Academic.forEach(x=> info += `• ${x}\n`);
+  info += '\nLaboratory Facilities:\n';
+  f.Laboratory.forEach(x=> info += `• ${x}\n`);
+  info += '\nLibrary Facilities:\n';
+  f.Library.forEach(x=> info += `• ${x}\n`);
+  info += '\nSports Facilities:\n';
+  f.Sports.forEach(x=> info += `• ${x}\n`);
+  info += '\nOther Facilities:\n';
+  f.Other.forEach(x=> info += `• ${x}\n`);
+  return info;
+}
+
+function getDepartmentsInfo() {
+  const dept = collegeData.departments;
+  let info = '🏛️ ACADEMIC DEPARTMENTS\n\n';
+  Object.entries(dept).forEach(([name, details])=>{
+    info += `Department of ${name}\n`;
+    if (details.courses) {
+      if (Array.isArray(details.courses)) info += `  Courses: ${details.courses.join(', ')}\n`;
+      else info += `  Courses: ${details.courses}\n`;
+    }
+    info += '\n';
+  });
+  return info;
+}
+
+function getContactInfo() {
+  const info = collegeData.basic_info;
+  let contact = '📞 CONTACT INFORMATION\n\n';
+  contact += `${info.name}\n\nAddress:\n`;
+  contact += `${info.location}\n${info.district}, ${info.state}\nPIN: ${info.pin}\n\n`;
+  contact += `Phone: ${info.phone.join(', ')}\nEmail: ${info.email}\nWebsite: ${info.website}\n\nAcademic Session: ${info.academic_session}\nOffice Hours: Mon-Sat, 9:00 AM - 5:00 PM`;
+  return contact;
+}
+
+function getAboutInfo() {
+  const info = collegeData.basic_info;
+  let out = '🎓 ABOUT CAS VATTAMKULAM\n\n';
+  out += `Established: ${info.established}\nManagement: ${info.management}\nAffiliation: ${info.affiliation}\nFaculty: ${info.faculty_count} qualified teachers\n\nVISION:\n${collegeData.vision}\n\nMISSION:\n${collegeData.mission}\n\nKEY FEATURES:\n• Quality education with modern infrastructure\n• Industry-oriented curriculum\n• Strong placement support\n• Active student clubs and activities\n• Holistic development focus`;
+  return out;
+}
+
+function getEventsInfo() {
+  const events = collegeData.events;
+  let out = '🎉 COLLEGE EVENTS & ACTIVITIES\n\n';
+  Object.entries(events).forEach(([name,data])=>{
+    out += `${name}\n`;
+    if (typeof data === 'object') {
+      Object.entries(data).forEach(([k,v])=>{
+        out += `  ${k.charAt(0).toUpperCase()+k.slice(1)}: ${v}\n`;
+      });
+    }
+    out += '\n';
+  });
+  return out;
+}
+
+function getCellsInfo() {
+  const cells = collegeData.other_cells;
+  let out = '🛡️ STUDENT WELFARE CELLS\n\n';
+  Object.entries(cells).forEach(([name,data])=>{
+    out += `${name}\nPurpose: ${data.purpose}\n`;
+    const acts = data.activities || data.functions || data.features || [];
+    if (acts.length) {
+      out += 'Activities:\n';
+      acts.slice(0,5).forEach(a=> out += `  • ${a}\n`);
+    }
+    if (data.policy) out += `Policy: ${data.policy}\n`;
+    out += '\n';
+  });
+  return out;
+}
+
+function getUnionInfo() {
+  const u = collegeData.college_union;
+  let out = '🏆 COLLEGE UNION\n\n';
+  out += `Purpose: ${u.purpose}\n\nPositions:\n`;
+  u.positions.forEach(p=> out += `• ${p}\n`);
+  out += '\nActivities:\n';
+  u.activities.forEach(a=> out += `• ${a}\n`);
+  out += `\nCurrent: ${u.recent}`;
+  return out;
+}
+
+function getHelpMenu() {
+  return `🎓 CAS VATTAMKULAM CHATBOT - HELP MENU
+
+I can help you with:
+
+📚 ACADEMICS
+  • Courses & Programs
+  • Admission Process & Fees
+  • Departments & Faculty
+
+🏫 FACILITIES
+  • Campus Infrastructure
+  • Labs & Library
+  • Sports Facilities
+
+🌟 ACTIVITIES
+  • NSS Programs
+  • Clubs & Associations
+  • Events & Fests
+  • College Union
+
+💼 PLACEMENT
+  • Training Programs
+  • Recruiters & Jobs
+  • Career Support
+
+🛡️ STUDENT WELFARE
+  • Women Cell
+  • Anti-Ragging Cell
+  • Grievance Cell
+
+📞 CONTACT & LOCATION
+
+Try asking:
+  'What courses are available?'
+  'How to apply for admission?'
+  'Tell me about NSS activities'
+  'What clubs are there?'
+  'Placement details'
+  'Campus facilities'`;
+}
+
+/* -------------------------
+   Main generate_response
+   ------------------------- */
+function generateResponse(query) {
+  const topics = searchQuery(query);
+  const responses = [];
+  for (const t of topics) {
+    if (t === 'courses') responses.push(getCoursesInfo(query));
+    else if (t === 'admission') responses.push(getAdmissionInfo());
+    else if (t === 'fees') responses.push(getFeesInfo());
+    else if (t === 'nss') responses.push(getNSSInfo());
+    else if (t === 'clubs') responses.push(getClubsInfo(query));
+    else if (t === 'placement') responses.push(getPlacementInfo());
+    else if (t === 'facilities') responses.push(getFacilitiesInfo());
+    else if (t === 'departments') responses.push(getDepartmentsInfo());
+    else if (t === 'contact') responses.push(getContactInfo());
+    else if (t === 'about') responses.push(getAboutInfo());
+    else if (t === 'events') responses.push(getEventsInfo());
+    else if (t === 'cells') responses.push(getCellsInfo());
+    else if (t === 'union') responses.push(getUnionInfo());
+    else responses.push(getHelpMenu());
+  }
+  return responses.join("\n\n");
+}
+
+/* -------------------------
+   UI glue
+   ------------------------- */
+const chatBox = document.getElementById('chatBox');
+const msgInput = document.getElementById('msg');
+const sendBtn = document.getElementById('sendBtn');
+const helpBtn = document.getElementById('helpBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+function addUserMessage(text){
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+function addBotMessage(text){
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.innerHTML = `<div class="bubble">${escapeHtml(text).replace(/\n/g,'<br>')}</div>`;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function escapeHtml(str){
+  return (''+str).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
+}
+
+sendBtn.addEventListener('click', async ()=>{
+  const text = msgInput.value.trim();
+  if (!text) return;
+  addUserMessage(text);
+  msgInput.value = '';
+  // simple delay for realism
+  await new Promise(r=>setTimeout(r, 250));
+  const reply = generateResponse(text);
+  addBotMessage(reply);
+});
+
+msgInput.addEventListener('keydown', (e)=>{
+  if (e.key === 'Enter') { e.preventDefault(); sendBtn.click(); }
+});
+
+helpBtn.addEventListener('click', ()=>{
+  addBotMessage(getHelpMenu());
+});
+
+resetBtn.addEventListener('click', ()=>{
+  chatBox.innerHTML = '';
+});
+
+/* initial greeting */
+addBotMessage("✓ CAS Vattamkulam Chatbot loaded. Type 'help' for suggestions or ask a question (e.g. 'What courses are available?').");
+</script>
+</body>
+</html>
